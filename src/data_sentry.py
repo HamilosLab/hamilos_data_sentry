@@ -47,7 +47,9 @@ DEFAULT_CONFIG = {
             'glob': ['*.avi'],
         },
         'ced': {
-            'glob': ['*_CED.mat', '*_CED.smrx', '*_CED.s2rx'],
+            # .smrx/.s2rx are raw Spike2 exports and count as CED files even
+            # when the filename doesn't say "CED" (e.g. Amber_10.s2rx).
+            'glob': ['*_CED.mat', '*.smrx', '*.s2rx'],
             'is_marker': True,
         },
         'mbi': {
@@ -82,8 +84,10 @@ DEFAULT_CONFIG = {
 
 # <Mouse>_<Cohort>_<N> (Analysis/) or <Mouse>_<N> (video/) session directories.
 SESSION_DIR_RE_TMPL = r'^{mouse}_(?:(?P<cohort>[A-Za-z0-9]+)_)?(?P<n>\d+)$'
-# <Mouse>_<N>_<rest> files in Training/ (e.g. Bob_100_CED.mat).
-TRAINING_PREFIX_RE_TMPL = r'^{mouse}_(?P<n>\d+)_'
+# <Mouse>_<N>_<rest> or <Mouse>_<N>.<ext> files in Training/ (e.g.
+# Bob_100_CED.mat, but also raw Spike2 exports like Amber_10.s2rx that never
+# got a "_CED" suffix).
+TRAINING_PREFIX_RE_TMPL = r'^{mouse}_(?P<n>\d+)(?=[_.])'
 # "<Mouse> Day <N>[ suffix].txt" lab notebook entries in Training/.
 DAY_NOTEBOOK_RE_TMPL = r'^{mouse} Day (?P<n>\d+)\b'
 # <Mouse>_<N>[video[s]][_]videoQCobj.mat, found flat under Analysis/.

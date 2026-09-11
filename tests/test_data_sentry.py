@@ -91,6 +91,9 @@ def mock_server_structure(mock_server_path):
     amber = os.path.join(server_path, 'Amber')
     _write(os.path.join(amber, 'video', 'Amber_16', 'Amber_16-01022025120000-0000.avi'))
     _write(os.path.join(amber, 'Training', 'Amber_16_CED.mat'))
+    # Raw Spike2 export with no "_CED" suffix and no trailing underscore
+    # before the extension (seen in pretraining/ on the real share).
+    _write(os.path.join(amber, 'Training', 'Amber_17.s2rx'))
 
     return dir_path, server_path, data_mgmt_dir
 
@@ -217,7 +220,7 @@ def test_discover_sessions(mock_server_structure):
         sessions, unparsed = discover_sessions(server_path, ['Bob', 'Amber'], DEFAULT_CONFIG)
 
     assert set(sessions['Bob'].keys()) == {42}
-    assert set(sessions['Amber'].keys()) == {16}
+    assert set(sessions['Amber'].keys()) == {16, 17}
 
     bob_42 = sessions['Bob'][42]
     assert bob_42['video_dir'] is not None
@@ -236,7 +239,7 @@ def test_build_session_inventory(mock_server_structure):
         sessions, _ = discover_sessions(server_path, ['Bob', 'Amber'], DEFAULT_CONFIG)
         inventory = build_session_inventory(server_path, sessions, DEFAULT_CONFIG)
 
-    assert len(inventory) == 2
+    assert len(inventory) == 3
 
     bob_row = inventory.loc[inventory['session_key'] == 'Bob_42'].iloc[0]
     assert bob_row['video_raw_present']
@@ -260,6 +263,13 @@ def test_build_session_inventory(mock_server_structure):
     assert not amber_row['gfit_present']
     assert amber_row['marker_present']  # ced is a marker category
     assert not amber_row['metadata_present']  # no mbi/day_notebook/exclusions/provenance
+
+    # Amber_17: session known only from a bare "<Mouse>_<N>.s2rx" file with no
+    # "_CED" suffix -- still discovered and still counted as a CED file.
+    amber_17_row = inventory.loc[inventory['session_key'] == 'Amber_17'].iloc[0]
+    assert amber_17_row['ced_present']
+    assert 'Amber_17.s2rx' in amber_17_row['ced_paths']
+    assert amber_17_row['marker_present']
 
 
 def test_write_results(mock_server_structure):
