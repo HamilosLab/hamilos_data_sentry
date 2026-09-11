@@ -4,7 +4,7 @@ import pandas as pd
 import tempfile
 import shutil
 from unittest.mock import patch, MagicMock
-from src.dataset_handler import DatasetFrameLogger, DatasetFrameHandler, get_time_pretty
+from archive.src.dataset_handler import DatasetFrameLogger, DatasetFrameHandler, get_time_pretty
 
 class TestDatasetFrameLogger:
     def setup_method(self):

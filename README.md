@@ -2,102 +2,68 @@
 Courtesy of ChatGPT
 
 # Introduction
-Code to:
-1. Transfer ephys data from the local machine to the server
-    - Recording will be copied to directory of specified user, under a specific project name
-2. Check that info file is present
-3. Update recording log
 
-NOTE: This system will only work well if this method of copying cannot be side-stepped
-    by the user without including metadata.
-    Alternatively, there could be functionality to keep emailing the user if a dataset is uploaded
-    (after a certain date, so previous datasets are not affected) without metadata.
-    (see https://www.sitepoint.com/quick-tip-sending-email-via-gmail-with-python/)
+Scans the Hamilos Lab network share for mouse sessions and builds a per-session data inventory:
+which of the known file categories (raw video, CED, MBI, lab notebook, exclusions, gfit, videoQC
+object, statObj, provenance) exist for each `(mouse, session)`. This is a database of what data
+already exists, not just a metadata-completeness gate.
 
-- Mounting of server is required, but not included in this code
-    - Code is given path to the server
-- If info file is not present, transfer will not be allowed
-- Copy of recording log is made locally and updated with new recording
-    - This allows multiple copies of the recording log to be made in case of accidental deletion
-- Recording log will contain:
-    1) Date
-    2) Time
-    3) User
-    4) Project name
-    5) User email
-    6) Recording name
-    7) Recording path
-- Directory to be copied can be specified both via the command line and via popup
+Mounting the network share is outside this repo's job -- it assumes
+`local_only_files/server_path.txt` already points at an accessible, mounted path (e.g.
+`/media/whitehead_drives/solexa_hamilos/Mouse Data`). That share is mounted **read-only**, so scan
+output is written locally, next to this repo (`data_management/`), not onto the share.
+
+Sessions are keyed by a per-mouse integer session number `N`, used consistently across:
+- `<server_path>/<Mouse>/video/<Mouse>_<N>/` -- raw video
+- `<server_path>/<Mouse>/Training/<Mouse>_<N>_*` and `"<Mouse> Day <N>....txt"` -- CED, MBI, lab
+  notebook, exclusions
+- `<server_path>/<Mouse>/Analysis/.../<Mouse>_<Cohort>_<N>/` -- gfit, statObj, provenance (the same
+  session is sometimes duplicated across multiple ad hoc `Analysis` grouping folders; the scanner
+  dedupes by `(mouse, N)`)
 
 # Scripts in the src directory
 
-## blech_data_transfer.py
-This script handles the transfer of ephys data from a local machine to the server. It:
-- Validates that the data folder exists and contains required metadata (.info file)
-- Allows users to select which user account and subfolder to transfer data to
-- Copies all files and directories from the local data folder to the server
-- Logs the transfer details in a dataset frame for tracking purposes
-- Ensures data isn't duplicated by checking if the experiment already exists
+## data_sentry.py
 
-## blech_data_sentry.py
-This script scans the server file system for datasets and checks for accompanying metadata. It:
-- Identifies datasets by looking for info.rhd files
-- Checks if required metadata files (*.info) are present for each dataset
-- Saves results to a CSV file for tracking purposes
-- Supports a blacklist to exclude certain directories from scanning
-- Provides detailed logging of the scanning process
+Scans `local_only_files/server_path.txt` for mice, discovers sessions under each mouse's
+`video/`, `Training/`, and `Analysis/` subfolders, and checks which file categories are present
+for each session (see `local_only_files/sentry_config.yaml` for the glob patterns and subdirectory
+name variants used). Writes, to a local `data_management/` directory next to this repo (the share
+itself is read-only):
 
-## dataset_handler.py
-This script manages the dataset frame that tracks all data transfers. It:
-- Checks for logs both locally and on the server
-- Merges logs if they exist in both locations
-- Ensures logs are up-to-date and consistent
-- Provides functionality to add new entries to the dataset frame
-- Validates server access and handles file synchronization
+- `data_management/session_inventory.csv` -- one row per session, with `<category>_present` /
+  `<category>_count` / `<category>_paths` columns, plus `marker_present` (a session MATLAB object
+  exists) and `metadata_present` (the day-notebook/exclusions/MBI files exist) convenience columns.
+- `data_management/unparsed_names.txt` -- names that looked session-like (started with a mouse's
+  name) but didn't parse as `<Mouse>_<N>`, for manual review.
+- `data_management/last_scan.txt` -- scan timestamp, duration, blacklist, and mouse directories
+  processed.
 
 # How to use
 
-## blech_data_transfer.py
+## data_sentry.py
 ```
-usage: python blech_data_transfer.py [-h] data_folder
+usage: python -m src.data_sentry [--ignore_blacklist]
 
-Transfer data from the blech server to the local machine.
-
-positional arguments:
-  data_folder  Path to local data folder.
+Scan the Hamilos Lab server for sessions and build a per-session data inventory.
 
 options:
-  -h, --help   show this help message and exit
-```
-
-## blech_data_sentry.py
-```
-usage: python blech_data_sentry.py [--ignore_blacklist]
-
-Scan the file-system for datasets and check if they have accompanying metadata.
-
-options:
+  -h, --help          show this help message and exit
   --ignore_blacklist  Ignore the blacklist file when scanning directories
 ```
 
-## mount_katz_drive.sh
-First install `cifs-utils` ::: `sudo apt-get install cifs-utils`
-```
-usage: ./mount_katz_drive.sh
-```
-- Will first ask for machine sudo password, then for brandeis password.
-- Will mount the katz drive to the local machine at /media/files_brandeis_drive by default.
-- Edit the script to change the mount location.
+## Configuration
 
-# Moonshot
-- Autoprocess uploaded data and extract recording quality features such as:
-    - Number of units
-    - Unit amplitude
-    - Unit signal-to-noise ratio
-    - Mean firing rate per unit
-    - Responsive fraction
-    - Discriminative fraction
-    - Palatable fraction
-    - Dynamic fraction
-    - Drift descriptors
-    - Unit similarity
+- `local_only_files/server_path.txt` -- the mounted root to scan (one mouse folder per line item
+  under it).
+- `local_only_files/sentry_blacklist.txt` -- newline list of top-level directory names to skip
+  (e.g. non-mouse folders, or mice to exclude from a given scan).
+- `local_only_files/sentry_config.yaml` -- optional; overrides subdirectory name variants and
+  file-category glob patterns. See the comments in that file for the defaults.
+
+# Archived
+
+`archive/` holds the original Katz Lab transfer tool (manual local-to-server copy gated on a
+metadata file), its recording-log handler, the Katz personnel roster, and the old CIFS mount
+script. These don't match how Hamilos Lab data arrives (rig-generated, landing directly on the
+network share) and aren't run in CI -- see `archive/README.md`.
