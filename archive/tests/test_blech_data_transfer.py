@@ -8,7 +8,7 @@ from io import StringIO
 import sys
 
 # Import the dataset_handler module
-from src.dataset_handler import DatasetFrameHandler, DatasetFrameLogger
+from archive.src.dataset_handler import DatasetFrameHandler, DatasetFrameLogger
 
 @pytest.fixture
 def temp_dir():
@@ -94,13 +94,13 @@ def mock_dataset_handler(mock_server_path):
 def test_parse_arguments():
     """Test argument parsing with data folder specified"""
     with patch('sys.argv', ['blech_data_transfer.py', '/test/path']):
-        from src.blech_data_transfer import parse_arguments
+        from archive.src.blech_data_transfer import parse_arguments
         args = parse_arguments()
         assert args.data_folder == '/test/path'
 
 def test_get_data_folder():
     """Test getting data folder from arguments"""
-    from src.blech_data_transfer import get_data_folder
+    from archive.src.blech_data_transfer import get_data_folder
     
     # Test with data folder in args
     args = MagicMock()
@@ -126,7 +126,7 @@ def test_get_data_folder():
 
 def test_initialize_dataset_handler(mock_server_path):
     """Test initializing dataset handler"""
-    from src.blech_data_transfer import initialize_dataset_handler
+    from archive.src.blech_data_transfer import initialize_dataset_handler
     
     dir_path, _, _ = mock_server_path
     
@@ -139,7 +139,7 @@ def test_initialize_dataset_handler(mock_server_path):
 
 def test_check_experiment_existence(mock_dataset_handler, mock_data_folder):
     """Test checking if experiment exists"""
-    from src.blech_data_transfer import check_experiment_existence
+    from archive.src.blech_data_transfer import check_experiment_existence
     
     # Mock check_experiment_exists to return False
     mock_dataset_handler.check_experiment_exists = MagicMock(return_value=False)
@@ -165,7 +165,7 @@ def test_check_experiment_existence(mock_dataset_handler, mock_data_folder):
 
 def test_validate_data_folder(mock_data_folder):
     """Test validating data folder"""
-    from src.blech_data_transfer import validate_data_folder
+    from archive.src.blech_data_transfer import validate_data_folder
     
     # Test with valid folder
     with patch('sys.stdout', new=StringIO()):
@@ -180,7 +180,7 @@ def test_validate_data_folder(mock_data_folder):
 
 def test_check_info_file(mock_data_folder):
     """Test checking for info file"""
-    from src.blech_data_transfer import check_info_file
+    from archive.src.blech_data_transfer import check_info_file
     
     # Test with existing info file
     with patch('sys.stdout', new=StringIO()):
@@ -210,7 +210,7 @@ def test_check_info_file(mock_data_folder):
 
 def test_select_user(mock_server_path):
     """Test selecting a user from the list"""
-    from src.blech_data_transfer import select_user
+    from archive.src.blech_data_transfer import select_user
     
     _, server_path, data_mgmt_dir = mock_server_path
     
@@ -233,7 +233,7 @@ def test_select_user(mock_server_path):
 
 def test_select_subfolder(mock_server_path):
     """Test selecting a subfolder"""
-    from src.blech_data_transfer import select_subfolder
+    from archive.src.blech_data_transfer import select_subfolder
     
     _, server_path, _ = mock_server_path
     user_path = os.path.join(server_path, 'user1_dir')
@@ -259,7 +259,7 @@ def test_select_subfolder(mock_server_path):
 
 def test_prepare_file_transfer(mock_data_folder, mock_server_path):
     """Test preparing file transfer"""
-    from src.blech_data_transfer import prepare_file_transfer
+    from archive.src.blech_data_transfer import prepare_file_transfer
     
     _, server_path, _ = mock_server_path
     copy_dir = os.path.join(server_path, 'user1_dir', 'subfolder1')
@@ -281,7 +281,7 @@ def test_prepare_file_transfer(mock_data_folder, mock_server_path):
 
 def test_transfer_data(mock_data_folder, mock_server_path):
     """Test transferring data"""
-    from src.blech_data_transfer import transfer_data
+    from archive.src.blech_data_transfer import transfer_data
     
     _, server_path, _ = mock_server_path
     copy_dir = os.path.join(server_path, 'user1_dir', 'subfolder1')
@@ -312,7 +312,7 @@ def test_transfer_data(mock_data_folder, mock_server_path):
 
 def test_add_log_entry(mock_dataset_handler, mock_server_path, mock_data_folder):
     """Test adding log entry"""
-    from src.blech_data_transfer import add_log_entry
+    from archive.src.blech_data_transfer import add_log_entry
     
     _, server_path, data_mgmt_dir = mock_server_path
     

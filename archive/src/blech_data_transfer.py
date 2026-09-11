@@ -22,7 +22,7 @@ from glob import glob
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
-from src import dataset_handler
+from archive.src import dataset_handler
 
 
 # Load path to the blech server

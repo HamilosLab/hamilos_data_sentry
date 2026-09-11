@@ -1,0 +1,58 @@
+# Configuration for src/data_sentry.py.
+#
+# All keys are optional -- anything left unset falls back to the defaults in
+# src/data_sentry.py's DEFAULT_CONFIG. Copy/edit this file to change how a
+# scan finds mice, sessions, and file categories under the server path
+# (local_only_files/server_path.txt).
+
+paths:
+  # Folder name variants to try under <server_path>/<mouse>/ for raw video.
+  video_subdir_names: ["video", "Video"]
+  # Folder name variants to try under <server_path>/<mouse>/ for the lab
+  # notebook / raw CED / MBI files.
+  training_subdir_names: ["Training", "training"]
+  # Folder name variants to try under <server_path>/<mouse>/ for derived
+  # analysis output (gfit, statObj, videoQC objects, provenance). Searched
+  # recursively and case-insensitively, since real layouts nest arbitrary
+  # grouping folders underneath (e.g. "Analysis/ALL SESSIONS/VLS/<session>/"
+  # or "Analysis/juice vs no juice/no juice/VLS/<session>/").
+  analysis_subdir_names: ["Analysis", "analysis", "ANALYSIS"]
+
+# Filenames to ignore everywhere (OS cruft, not lab data).
+ignore_names: [".DS_Store"]
+
+# One entry per tracked file category. Each category's search location
+# (video/, Training/, or a session's Analysis/ dirs) is fixed in
+# build_session_inventory (src/data_sentry.py), not configurable here --
+# only `glob` (which filenames count) and the flags below can be overridden.
+#
+# is_marker: presence of this category is enough to say "this session exists".
+# is_metadata: presence of this category counts toward "session has metadata".
+file_categories:
+  video_raw:
+    glob: ["*.avi"]
+  ced:
+    glob: ["*_CED.mat", "*_CED.smrx", "*_CED.s2rx"]
+    is_marker: true
+  mbi:
+    glob: ["*_MBI_*.mat"]
+    is_marker: true
+    is_metadata: true
+  day_notebook:
+    glob: ["* Day *.txt"]
+    is_metadata: true
+  exclusions:
+    glob: ["*exclusions*videoqc*.txt", "*exclusions*videoQC*.txt"]
+    is_metadata: true
+  gfit:
+    glob: ["gfit.mat"]
+  videoqc_obj:
+    glob: ["*videoQCobj.mat"]
+    is_marker: true
+  stat_obj:
+    # Session-specific data; the filename itself doesn't encode the session,
+    # so it's only identifiable by the session directory it's found in.
+    glob: ["*_statObj.mat"]
+  provenance:
+    glob: ["*provenance*.txt"]
+    is_metadata: true
