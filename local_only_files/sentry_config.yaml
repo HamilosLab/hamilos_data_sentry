@@ -32,7 +32,9 @@ file_categories:
   video_raw:
     glob: ["*.avi"]
   ced:
-    glob: ["*_CED.mat", "*_CED.smrx", "*_CED.s2rx"]
+    # .smrx/.s2rx are raw Spike2 exports and count as CED files even when the
+    # filename doesn't say "CED" (e.g. Amber_10.s2rx).
+    glob: ["*_CED.mat", "*.smrx", "*.s2rx"]
     is_marker: true
   mbi:
     glob: ["*_MBI_*.mat"]
